@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+   
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css"
+    />
+
+
+  </head>
+  <body>
+    <!-- Navbar  -->
+    <nav class="transparent z-depth-0">
+      <div class="nav-wrapper">
+        <a href="#" class="brand-logo black-text center" style="font-family:'Courier New'; font-size:31px"><b> WEATHER REPORT</b> </a>
+      </div>
+    </nav>
+
+    <!-- Body  -->
+    <div class="row">
+     
+      <div class="col s14 m4">
+        <div class="container">
+          <!-- heading  -->
+          <h5 class="font" >Choose the City!!</h5>
+
+          <!-- search -->
+          <form>
+            <div class="input-field">
+              <div class="row input">
+                <div class="col s8 m8" style="margin-top: 5px;">
+                  <i class="prefix" aria-hidden="true"></i>
+                  <input
+                    type="text"
+                    id="icon_prefix"
+                    class="file-path validate"
+                    name="city"
+                    placeholder="Type location..."
+                  />
+                </div>
+                <div class="col s4 m4" style="margin-top: 10px;">
+                  <button
+                    type="submit"
+                    class="btn btn-c transparent z-depth-0 grey-text"
+                  >
+                    <i class="fa fa-search"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </form>
+          <!-- End Search   -->
+          <!-- Card  -->
+          <div class="row">
+            <div class="col s12 m12">
+              <div class="card hide">
+                <div class="card-content content">
+                  <h5 class="font-c">CITY NAME</h5>
+                  <span class="font-c">WEATHER CONDITION</span>
+                  <h3 class="font-c">TEMP &degC</h3>
+                </div>
+                <div class="card-image">
+                  <img src="assets/Day.png" />
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- End Card  -->
+        </div>
+      </div>
+    </div>
+
+<script>
+
+const key = "zknDgGnucBuzp4aaKsXowA2pLFJXCLMa";
+
+// getting forecast
+
+const getForecasts = async (id) => {
+  const baseUrl = "http://dataservice.accuweather.com/currentconditions/v1/";
+  const query = `${id}?apikey=${key}`;
+
+  const res = await fetch(baseUrl + query);
+  const data = await res.json();
+
+  return data[0];
+};
+
+// getting city
+const getCity = async (city) => {
+  const baseUrl =
+    "http://dataservice.accuweather.com/locations/v1/cities/search";
+  const query = `?apikey=${key}&q=${city}`;
+
+  const res = await fetch(baseUrl + query);
+  const data = await res.json();
+
+  return data[0];
+};
+
+const cityForm = document.querySelector("form");
+const card = document.querySelector(".card");
+const content = document.querySelector(".content");
+const cardImage = document.querySelector(".card-image img");
+
+const updateUI = (data) => {
+  const cityDets = data.cityDetails;
+  const forecast = data.cityForecast;
+
+  //updating details
+  content.innerHTML = `
+    <h5 class="font-c">${cityDets.EnglishName}</h5>
+    <span class="font-c">${forecast.WeatherText}</span>
+    <h3 class="font-c">${forecast.Temperature.Metric.Value} &degC</h3>
+  `;
+
+  //updating image
+  let imgSrc = null;
+  if (forecast.IsDayTime) {
+    imgSrc = "assets/Day.png";
+  } else {
+    imgSrc = "assets/Night.png";
+  }
+  
+
+  cardImage.setAttribute("src", imgSrc);
+
+  //remove hide class
+   if (card.classList.contains("hide")) {
+    card.classList.remove("hide");
+  } 
+};
+
+const updateCity = async (city) => {
+  const cityDetails = await getCity(city);
+  const cityForecast = await getForecasts(cityDetails.Key);
+
+  return {
+    cityDetails: cityDetails,
+    cityForecast: cityForecast,
+  };
+};
+
+cityForm.addEventListener("submit", (e) => {
+  //preventing default
+  e.preventDefault();
+
+  //getting city value
+  const city = cityForm.city.value.trim();
+  cityForm.reset();
+
+  //updating UI
+  updateCity(city)
+    .then((data) => {
+      updateUI(data);
+    })
+    .catch((err) => alert("City not found"));
+});
+
+    </script>
+
+  </body>
+</html>
